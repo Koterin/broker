@@ -24,8 +24,8 @@ func main() {
     defer ch.Close()
 
     q, err := ch.QueueDeclare(
-        "notes", // name
-        false,   // durable
+        "notesDur", // name
+        true,   // durable
         false,   // delete when unused
         false,   // exclusive
         false,   // no-wait
@@ -55,6 +55,7 @@ func main() {
             false,  // mandatory
             false,  // immediate
             amqp.Publishing {
+                DeliveryMode: amqp.Persistent,
                 ContentType: "text/plain",
                 Body:        []byte(input),
             })

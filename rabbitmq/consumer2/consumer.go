@@ -2,6 +2,7 @@ package main
 
 import (
     "log"
+    "time"
 
     amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -27,8 +28,8 @@ func main() {
     defer ch.Close()
 
     q, err := ch.QueueDeclare(
-        "notes", // name
-        false,   // durable
+        "notesDur", // name
+        true,   // durable
         false,   // delete when unused
         false,   // exclusive
         false,   // no-wait
@@ -36,10 +37,17 @@ func main() {
     )
     failOnError(err, "Failed to declare a queue")
 
+    err = ch.Qos(
+        1,     // prefetch count
+        0,     // prefetch size
+        false, // global
+    )
+    failOnError(err, "Failed to set QoS")
+
     msgs, err := ch.Consume(
         q.Name, // queue
         "",     // consumer
-        true,   // auto-ack
+        false,   // auto-ack
         false,  // exclusive
         false,  // no-local
         false,  // no-wait
@@ -52,6 +60,8 @@ func main() {
     go func() {
         for d := range msgs {
             log.Println("Received a message: ", string(d.Body))
+            time.Sleep(5 * time.Second)
+            d.Ack(false)
         }
     }()
 
